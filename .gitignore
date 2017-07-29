@@ -1,0 +1,17 @@
+# Node.js folders
+*node_modules/
+
+# backup folders
+*backup/
+
+# Build artefacts
+*build/
+*styleguide/
+*test/results/
+
+# OS generated files and folders
+*logs/
+.DS_Store
+Thumbs.db
+npm-debug.log
+.env
