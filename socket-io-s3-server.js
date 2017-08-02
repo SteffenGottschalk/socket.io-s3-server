@@ -69,8 +69,8 @@ function SocketIOS3Server(socket, options) {
 
 	this.socket = socket;
 
-	socket.once('socket.io-s3::reqSync', () => {
-		socket.emit('socket.io-s3::recvSync', {
+	socket.once('socket.io-file::reqSync', () => {
+		socket.emit('socket.io-file::recvSync', {
 			maxFileSize: this.maxFileSize,
 			accepts: this.accepts,
 			chunkSize: this.chunkSize,
@@ -83,13 +83,13 @@ function SocketIOS3Server(socket, options) {
 	var self = this;
 	var uploadingFiles = {};
 
-	socket.on('socket.io-s3::createFile', (fileInfo) => {
+	socket.on('socket.io-file::createFile', (fileInfo) => {
 		var id = fileInfo.id;
 		var uploadDir = null;
 		var uploadTo = fileInfo.uploadTo || '';
 
 		function sendError(err) {
-			socket.emit(`socket.io-s3::error::${id}`, {
+			socket.emit(`socket.io-file::error::${id}`, {
 				message: err.message
 			});
 			self.emit('error', err);
@@ -100,7 +100,7 @@ function SocketIOS3Server(socket, options) {
 		var filenameGuid = guid();
 		var filename = filenameGuid;
 		var filepath = filenameGuid;
-		var fileExtension = fileInfo.name.split('.').pop();
+		var fileExtension = fileInfo.name.split('.').pop();;
 
 		if (this.rename) {
 			if (typeof this.rename === 'function') {
@@ -188,22 +188,22 @@ function SocketIOS3Server(socket, options) {
 					self.emit('complete', emitObj);
 
 					delete emitObj.uploadDir;
-					self.socket.emit(`socket.io-s3::complete::${id}`, emitObj);
+					self.socket.emit(`socket.io-file::complete::${id}`, emitObj);
 				}
 			}
 			else {
 				self.emit('complete', emitObj);
 
 				delete emitObj.uploadDir;
-				self.socket.emit(`socket.io-s3::complete::${id}`, emitObj);
+				self.socket.emit(`socket.io-file::complete::${id}`, emitObj);
 			}
 
 			// Release event handlers
-			socket.removeAllListeners(`socket.io-s3::stream::${id}`);
-			socket.removeAllListeners(`socket.io-s3::done::${id}`);
-			socket.removeAllListeners(`socket.io-s3::complete::${id}`);
-			socket.removeAllListeners(`socket.io-s3::abort::${id}`);
-			socket.removeAllListeners(`socket.io-s3::error::${id}`);
+			socket.removeAllListeners(`socket.io-file::stream::${id}`);
+			socket.removeAllListeners(`socket.io-file::done::${id}`);
+			socket.removeAllListeners(`socket.io-file::complete::${id}`);
+			socket.removeAllListeners(`socket.io-file::abort::${id}`);
+			socket.removeAllListeners(`socket.io-file::error::${id}`);
 
 			delete uploadingFiles[id];
 		};
@@ -234,15 +234,15 @@ function SocketIOS3Server(socket, options) {
 
 		uploadingFiles[id].writeStream = writeStream;
 
-		socket.emit(`socket.io-s3::request::${id}`);
+		socket.emit(`socket.io-file::request::${id}`);
 
-		socket.on(`socket.io-s3::stream::${id}`, (chunk) => {
+		socket.on(`socket.io-file::stream::${id}`, (chunk) => {
 			if (uploadingFiles[id].abort) {
-				socket.removeAllListeners(`socket.io-s3::stream::${id}`);
-				socket.removeAllListeners(`socket.io-s3::done::${id}`);
-				socket.removeAllListeners(`socket.io-s3::complete::${id}`);
-				socket.removeAllListeners(`socket.io-s3::abort::${id}`);
-				socket.removeAllListeners(`socket.io-s3::error::${id}`);
+				socket.removeAllListeners(`socket.io-file::stream::${id}`);
+				socket.removeAllListeners(`socket.io-file::done::${id}`);
+				socket.removeAllListeners(`socket.io-file::complete::${id}`);
+				socket.removeAllListeners(`socket.io-file::abort::${id}`);
+				socket.removeAllListeners(`socket.io-file::error::${id}`);
 
 				uploadingFiles[id].writeStream.end();
 				delete uploadingFiles[id];
@@ -269,26 +269,26 @@ function SocketIOS3Server(socket, options) {
 				});
 
 				if (!writeDone) {
-					writeStream.once('drain', () => socket.emit(`socket.io-s3::request::${id}`));
+					writeStream.once('drain', () => socket.emit(`socket.io-file::request::${id}`));
 				}
 				else {
 					if (self.transmissionDelay) {
 						setTimeout(() => {
-							socket.emit(`socket.io-s3::request::${id}`);
+							socket.emit(`socket.io-file::request::${id}`);
 						}, self.transmissionDelay);
 					}
 					else {
-						socket.emit(`socket.io-s3::request::${id}`);
+						socket.emit(`socket.io-file::request::${id}`);
 					}
 				}
 			}
 
 			write();
 		});
-		socket.on(`socket.io-s3::done::${id}`, () => {
+		socket.on(`socket.io-file::done::${id}`, () => {
 			uploadComplete();
 		});
-		socket.on(`socket.io-s3::abort::${id}`, () => {
+		socket.on(`socket.io-file::abort::${id}`, () => {
 			uploadingFiles[id].abort = true;
 
 			self.emit('abort', {
@@ -297,7 +297,7 @@ function SocketIOS3Server(socket, options) {
 				wrote: uploadingFiles[id].wrote,
 				uploadDir: uploadingFiles[id].uploadDir
 			});
-			socket.emit(`socket.io-s3::abort::${id}`, {
+			socket.emit(`socket.io-file::abort::${id}`, {
 				name: uploadingFiles[id].name,
 				size: uploadingFiles[id].size,
 				wrote: uploadingFiles[id].wrote,
