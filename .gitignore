@@ -1,9 +1,6 @@
 # Node.js folders
 *node_modules/
 
-# backup folders
-*backup/
-
 # Build artefacts
 *build/
 *styleguide/
